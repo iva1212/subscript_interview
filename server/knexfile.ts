@@ -4,9 +4,10 @@
   Knex also allows for easy switching between databases. 
   But the .returning() method will only work for PostgreSQL, MSSQL, and Oracle databases.
 */
-require('dotenv').config();
-module.exports = {
+import * as dotenv from 'dotenv';
 
+dotenv.config();
+export default {
   test: {
     client: 'postgresql',
     connection: {
