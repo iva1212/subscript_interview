@@ -15,7 +15,8 @@
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
     "express": "^4.16.4",
-    "jest": "^24.9.0",
+    "firebase-admin": "^13.4.0",
+    "jest": "^30.0.4",
     "knex": "^3.1.0",
     "lodash": "^4.17.15",
     "nodemon": "^2.0.2",
@@ -26,8 +27,11 @@
     "typescript": "^5.8.3"
   },
   "devDependencies": {
+    "@jest/globals": "^30.0.4",
     "@types/express": "^5.0.3",
+    "@types/jest": "^30.0.0",
     "@types/node": "^24.0.13",
-    "concurrently": "^4.0.1"
+    "concurrently": "^4.0.1",
+    "ts-jest": "^29.4.0"
   }
 }

@@ -24,3 +24,5 @@ node_modules
 ./client/npm-debug.log*
 ./client/yarn-debug.log*
 ./client/yarn-error.log*
+
+interviewproject-4f5c2-firebase-adminsdk-fbsvc-dc680abd79.json

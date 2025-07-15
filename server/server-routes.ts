@@ -1,86 +1,67 @@
-import * as _ from "lodash";
-import * as todos from "./database/todo-queries";
+import { OrganizationController } from "./controllers/org-controllers";
+import { PermissionsController } from "./controllers/permissions-controller";
+import { RolesController } from "./controllers/roles-controllers";
+import { StatusController } from "./controllers/status-controller";
+import { TasksController } from "./controllers/task-controller";
+import { UserController } from "./controllers/user-controllers";
+import { adminMiddleware } from "./middlewares/admin.middleware";
+import { taskMiddleware } from "./middlewares/task.middleware";
+import { BaseRoutes } from "./routes/base-route";
 
-function createToDo(req, data) {
-  const protocol = req.protocol,
-    host = req.get("host"),
-    id = data.id;
-
-  return {
-    title: data.title,
-    order: data.order,
-    completed: data.completed || false,
-    url: `${protocol}://${host}/${id}`,
+export default function getRoutes() {
+  const controllers = {
+    users: new UserController(),
+    tasks: new TasksController(),
+    roles: new RolesController(),
+    permissions: new PermissionsController(),
+    organizations: new OrganizationController(),
+    statuses: new StatusController(),
   };
-}
 
-async function getAllTodos(req, res) {
-  const allEntries = await todos.all();
-  return res.send(allEntries.map(_.curry(createToDo)(req)));
-}
+  const routes: {
+    url: string;
+    method: string;
+    func: (req: any, res: any) => void;
+    middlewares?: any[];
+  }[] = [];
 
-async function getTodo(req, res) {
-  const todo = await todos.get(req.params.id);
-  return res.send(todo);
-}
-
-async function postTodo(req, res) {
-  const created = await todos.create(req.body.title, req.body.order);
-  return res.send(createToDo(req, created));
-}
-
-async function patchTodo(req, res) {
-  const patched = await todos.update(req.params.id, req.body);
-  return res.send(createToDo(req, patched));
-}
-
-async function deleteAllTodos(req, res) {
-  const deletedEntries = await todos.clear();
-  return res.send(deletedEntries.map(_.curry(createToDo)(req)));
-}
-
-async function deleteTodo(req, res) {
-  const deleted = await todos.del(req.params.id);
-  return res.send(createToDo(req, deleted));
-}
-
-function addErrorReporting(func, message) {
-  return async function (req, res) {
-    try {
-      return await func(req, res);
-    } catch (err) {
-      console.log(`${message} caused by: ${err}`);
-
-      // Not always 500, but for simplicity's sake.
-      res.status(500).send(`Opps! ${message}.`);
+  for (const key in controllers) {
+    if (controllers.hasOwnProperty(key)) {
+      const controller = controllers[key];
+      const routesClass = new BaseRoutes(controller, key);
+      const controllerRoutes = routesClass.getRoutes();
+      controllerRoutes.forEach((route) => {
+        const middlewares = getMiddleWare(key, route.name);
+        routes.push({
+          url: route.suffix,
+          method: route.httpMethod,
+          func: routesClass.addErrorReporting(route.method, route.errorMessage),
+          middlewares,
+        });
+      });
     }
-  };
+  }
+  return routes;
 }
 
-const preToExport = {
-  getAllTodos: {
-    method: getAllTodos,
-    errorMessage: "Could not fetch all todos",
-  },
-  getTodo: { method: getTodo, errorMessage: "Could not fetch todo" },
-  postTodo: { method: postTodo, errorMessage: "Could not post todo" },
-  patchTodo: { method: patchTodo, errorMessage: "Could not patch todo" },
-  deleteAllTodos: {
-    method: deleteAllTodos,
-    errorMessage: "Could not delete all todos",
-  },
-  deleteTodo: { method: deleteTodo, errorMessage: "Could not delete todo" },
-};
-
-const toExport: {
-  [route: string]: (req: any, res: any) => Promise<any>;
-} = {};
-
-for (let route in preToExport) {
-  toExport[route] = addErrorReporting(
-    preToExport[route].method,
-    preToExport[route].errorMessage
-  );
+function getMiddleWare(key: string, name: string) {
+  switch (key) {
+    case "users":
+      return [adminMiddleware];
+    case "tasks":
+      if (name === "create" || name === "all") {
+        return [];
+      }
+      return [taskMiddleware];
+    case "roles":
+      return [adminMiddleware];
+    case "permissions":
+      return [adminMiddleware];
+    case "organizations":
+      return [adminMiddleware];
+    case "status":
+      return [adminMiddleware];
+    default:
+      return [];
+  }
 }
-
-export default toExport;

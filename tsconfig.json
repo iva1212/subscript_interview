@@ -2,8 +2,11 @@
   "compilerOptions": {
     "outDir": "./built",
     "allowJs": true,
-    "target": "es5"
+    "target": "es5",
+    "resolveJsonModule": true,
+  },
+  "paths": {
+    "@types/*": ["./types/**/*"] // Alias for a folder outside the project
   },
   "include": ["./server/**/*"],
-  "exclude": ["./server/tests/**/*"]
 }

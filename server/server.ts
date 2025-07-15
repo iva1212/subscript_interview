@@ -1,18 +1,24 @@
-import app from './server-config';
-import routes from './server-routes'
+import app from "./server-config";
+import getRoutes from "./server-routes";
+import { cert, initializeApp, ServiceAccount } from "firebase-admin/app";
+import * as serviceAccount from "../interviewproject-4f5c2-firebase-adminsdk-fbsvc-dc680abd79.json";
+import { authMiddleware } from "./middlewares/auth.middleware";
 
 const port = process.env.PORT || 5000;
 
-app.get('/', routes.getAllTodos);
-app.get('/:id', routes.getTodo);
 
-app.post('/', routes.postTodo);
-app.patch('/:id', routes.patchTodo);
+initializeApp({
+  credential: cert(serviceAccount as ServiceAccount),
+});
 
-app.delete('/', routes.deleteAllTodos);
-app.delete('/:id', routes.deleteTodo);
+const routes = getRoutes();
+app.use(authMiddleware);
+for (const route of routes) {
+  console.log(`Registering route: ${route.method.toUpperCase()} ${route.url}`);
+  app[route.method](route.url,route.middlewares, route.func);
+}
 
-if (process.env.NODE_ENV !== 'test') {
+if (process.env.NODE_ENV !== "test") {
   app.listen(port, () => console.log(`Listening on port ${port}`));
 }
 
